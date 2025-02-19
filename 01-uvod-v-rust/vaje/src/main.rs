@@ -7,12 +7,20 @@ use core::panic;
 /// Napišite funkcijo `fib`, ki sprejme začetna člena fibbonacijevega zaporedja, število `n` in vrne `n`-ti člen zaporedja
 
 fn fib(a0: u32, a1: u32, n: u32) -> u32 {
-    panic!("Not implemented");
+    match n {
+        0 => a0,
+        1 => a1,
+        n => fib(a1, a0 + a1, n - 1)
+    }
 }
 
 /// ------------------------------------------------------------------------------------------------
 
 /// Napišite funkcijo `je_prestopno`, ki za podano leto preveri, ali je prestopno
+
+fn je_prestopno(year: u32) -> bool {
+    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+}
 
 /// ------------------------------------------------------------------------------------------------
 
@@ -21,13 +29,25 @@ fn fib(a0: u32, a1: u32, n: u32) -> u32 {
 // Dan, mesec, leto
 type Date = (u32, u32, u32);
 
+fn je_veljaven_datum((day, month, year): Date) -> bool {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 13 => day >= 1 && day <= 31,
+        4 | 6 | 9 | 11 => day >= 1 && day <= 30,
+        2 => day >= 1 && day <= if je_prestopno(year) { 29 } else { 28 },
+        _ => false
+    }
+}
+
 /// ------------------------------------------------------------------------------------------------
 
 /// Napišite funkcijo `iteracija(mut start: u32, fun: fn(u32) -> u32, cond: fn(u32) -> bool) -> u32`, ki sprejme iteracijsko funkcijo, zaustavitveni pogoj in začetno vrednost.
 /// Iteracijsko funkcijo zaporedoma uporablja, dokler za rezultat ne velja zaustavitveni pogoj, in vrne prvi rezultat, ki zadošča zaustavitvenemu pogoju.
 
 fn iteracija(mut start: u32, fun: fn(u32) -> u32, cond: fn(u32) -> bool) -> u32 {
-    panic!("Not implemented");
+    match cond(start) {
+        true => start,
+        false => iteracija(fun(start), fun, cond)
+    }
 }
 
 /// ------------------------------------------------------------------------------------------------
@@ -41,7 +61,17 @@ fn iteracija(mut start: u32, fun: fn(u32) -> u32, cond: fn(u32) -> bool) -> u32 
 /// 5. Ponavljamo korake 2-4
 
 fn bisekcija(mut a: f64, mut b: f64, fun: fn(f64) -> f64, prec: f64) -> f64 {
-    panic!("Not implemented");
+    let c = (a + b) / 2.;
+
+    if fun(c).abs() < prec || (b - a) < prec {
+        return c;
+    }
+
+    if fun(a) * fun(c) < 0. {
+        bisekcija(a, c, fun, prec)
+    } else {
+        bisekcija(c, b, fun, prec)
+    }
 }
 
 /// ------------------------------------------------------------------------------------------------
@@ -51,7 +81,43 @@ fn bisekcija(mut a: f64, mut b: f64, fun: fn(f64) -> f64, prec: f64) -> f64 {
 /// Če uporabnik vpiše neveljavno število to ni napaka, program za pogoj aritmetičnega zaporedja upošteva samo veljavno vpisana števila.
 
 fn guessing_game() {
-    panic!("Not implemented");
+    let mut first = None;
+    let mut second = None;
+    let mut diff = None;
+
+    loop {
+        let mut number = String::new();
+
+        std::io::stdin()
+            .read_line(&mut number)
+            .expect("Failed to read line");
+
+        let number: i32 = match number.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+
+        match first {
+            Some(first) => match second {
+                Some(second) => {
+                    if guess - second != diff {
+                        println!("Ni več aritmetično zaporedje");
+                        return;
+                    } else {
+                        first = second;
+                        second = Some(number);
+                        diff = Some(number - first);
+                    }
+
+                },
+                None => {
+                    second = Some(number);
+                    diff = Some(number - first);
+                },
+            },
+            None => first = Some(number),
+        }
+    }
 }
 
 /// ------------------------------------------------------------------------------------------------
@@ -114,7 +180,8 @@ fn pyramid(n: u32) {
 /// A B C D C B A
 /// Napišite funkcijo `fn selection_sort(mut arr: [u32])`, ki uredi tabelo `arr` z uporabo algoritma urejanja z izbiranjem
 
-fn main() {}
+fn main() {
+}
 
 #[cfg(test)]
 mod tests {
@@ -128,5 +195,31 @@ mod tests {
 
     #[test]
     fn test_fib() {
+        assert_eq!(fib(1, 2, 0), 1);
+        assert_eq!(fib(1, 2, 1), 2);
+        assert_eq!(fib(1, 2, 2), 3);
+        assert_eq!(fib(1, 2, 3), 5);
+        assert_eq!(fib(1, 2, 4), 8);
+    }
+
+    #[test]
+    fn test_je_prestopno() {
+        assert_eq!(je_prestopno(2000), true);
+        assert_eq!(je_prestopno(2004), true);
+        assert_eq!(je_prestopno(2008), true);
+        assert_eq!(je_prestopno(2100), false);
+        assert_eq!(je_prestopno(2200), false);
+        assert_eq!(je_prestopno(2400), true);
+    }
+
+    #[test]
+    fn test_je_veljaven_datum() {
+        assert_eq!(je_veljaven_datum((1, 0, 2000)), false);
+        assert_eq!(je_veljaven_datum((0, 1, 2000)), false);
+        assert_eq!(je_veljaven_datum((1, 1, 2000)), true);
+        assert_eq!(je_veljaven_datum((31, 1, 2000)), true);
+        assert_eq!(je_veljaven_datum((32, 1, 2000)), false);
+        assert_eq!(je_veljaven_datum((29, 2, 2000)), true);
+        assert_eq!(je_veljaven_datum((29, 2, 2001)), false);
     }
 }
